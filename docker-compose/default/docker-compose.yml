@@ -12,10 +12,10 @@ services:
     networks:
       - soukupandrej-network
 
-  accounts:
-    image: soukupandrej/accounts:latest
+  eurekaserver:
+    image: soukupandrej/eurekaserver:latest
     ports:
-      - "8080:8080"
+      - "8070:8070"
     deploy:
       resources:
         limits:
@@ -32,6 +32,30 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: default
       SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+
+
+  accounts:
+    image: soukupandrej/accounts:latest
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
+    networks:
+      - soukupandrej-network
+    depends_on:
+      - configserver
+      - eurekaserver
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
 
 
   loans:
@@ -44,16 +68,18 @@ services:
           memory: 700m
       restart_policy:
         condition: on-failure
-        delay: 5s
+        delay: 15s
         max_attempts: 3
         window: 120s
     networks:
       - soukupandrej-network
     depends_on:
       - configserver
+      - eurekaserver
     environment:
       SPRING_PROFILES_ACTIVE: default
       SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
 
   cards:
     image: soukupandrej/cards:latest
@@ -65,16 +91,18 @@ services:
           memory: 700m
       restart_policy:
         condition: on-failure
-        delay: 5s
+        delay: 15s
         max_attempts: 3
         window: 120s
     networks:
       - soukupandrej-network
     depends_on:
       - configserver
+      - eurekaserver
     environment:
       SPRING_PROFILES_ACTIVE: default
       SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
 
 networks:
   soukupandrej-network:
